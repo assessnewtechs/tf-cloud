@@ -1,27 +1,7 @@
 
 /*
-output "eip" {
-  value = aws_instance.my1stec2.public_ip
-}
-*/
-
-/*
-I have created variables.tf and terraform.tfvars where I defined instace type and ami
-If you need to debug user_data section defined in ec2 creation, use cat /var/log/cloud-init-output.log
-Tip 1
-terraform state list to list all the resources created by terraform apply
-Tip 2
-terraform state show aws_internet_gateway.gw-APP to display all the details for the selected resource
-1. Create VPC
-2. Create internet gateway
-3. Create custom routing table
-4. Create subnet
-5. Subnet association with the routing table which previously created in step 3 and 4
-6. Creation of security group and allowing http and https from Internet , ssh from your local ip
-7. Create network interface with an ip address -step 4!
-8. Assign elastic ip to in the NIC -step 7!
-9. Crate an EC2 by using an ami -free tier, ubuntu would do, install and a web server and configure a dummy landing page
-10. Elastic Load balancer: ALB provision, Listener provision, Target group provision, Target group association
+TIP:
+If you need to debug user_data section defined in ec2 creation, review cat /var/log/cloud-init-output.log
 */
 
 ##1. Create VPC
@@ -67,7 +47,7 @@ resource "aws_route_table" "rt-prod-APP" {
 resource "aws_subnet" "subnet-APP" {
   vpc_id     = aws_vpc.prod-VPC.id
   cidr_block = var.subnet_cidr[0]
-  availability_zone = var.subnet_az[0] #"eu-west-1a" this is not mandatory to creat a subnet resource optional
+  availability_zone = var.subnet_az[0]
 
   tags = {
     Name = "production-Application"
@@ -78,7 +58,7 @@ resource "aws_subnet" "subnet-APP" {
 resource "aws_subnet" "subnet-APP-AZ-B" {
   vpc_id     = aws_vpc.prod-VPC.id
   cidr_block = var.subnet_cidr[1]
-  availability_zone = var.subnet_az[1] #"eu-west-1b" this is not mandatory to creat a subnet resource optional
+  availability_zone = var.subnet_az[1]
 
   tags = {
     Name = "production-Application"
@@ -89,7 +69,7 @@ resource "aws_subnet" "subnet-APP-AZ-B" {
 resource "aws_subnet" "subnet-APP-AZ-C" {
   vpc_id     = aws_vpc.prod-VPC.id
   cidr_block = var.subnet_cidr[2]
-  availability_zone = var.subnet_az[2] #"eu-west-1b" this is not mandatory to creat a subnet resource optional
+  availability_zone = var.subnet_az[2]
 
   tags = {
     Name = "production-Application"
@@ -194,7 +174,7 @@ resource "aws_security_group" "allow_ssh" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["80.49.47.221/32"]
+    cidr_blocks = ["your_ip_address/32"]
   }
 
 
@@ -213,7 +193,7 @@ resource "aws_security_group" "allow_ssh" {
 ##7. Create network interface
 resource "aws_network_interface" "application-server-nic" {
   subnet_id       = aws_subnet.subnet-APP.id
-  ###private_ips     = ["10.90.1.90"]
+  ###private_ips     = ["10.90.1.90"]  #if you need a fixed IP feel free yo define it
   security_groups = [aws_security_group.allow_http_https_alb_ec2.id,aws_security_group.allow_ssh.id]
 
 }
@@ -221,7 +201,7 @@ resource "aws_network_interface" "application-server-nic" {
 ##7. Create network interface (b)
 resource "aws_network_interface" "application-server-nic-B" {
   subnet_id       = aws_subnet.subnet-APP-AZ-B.id
-  ###private_ips     = ["10.90.2.90"]
+  ###private_ips     = ["10.90.2.90"]  #if you need a fixed IP feel free yo define it
   security_groups = [aws_security_group.allow_http_https_alb_ec2.id,aws_security_group.allow_ssh.id]
 
 }
@@ -229,7 +209,7 @@ resource "aws_network_interface" "application-server-nic-B" {
 ##7. Create network interface (c)
 resource "aws_network_interface" "application-server-nic-C" {
   subnet_id       = aws_subnet.subnet-APP-AZ-C.id
-  ###private_ips     = ["10.90.3.90"]
+  ###private_ips     = ["10.90.3.90"]  #if you need a fixed IP feel free yo define it
   security_groups = [aws_security_group.allow_http_https_alb_ec2.id,aws_security_group.allow_ssh.id]
 
 }
@@ -244,7 +224,7 @@ resource "aws_eip" "application-server-pubip" {
   vpc                       = true
   network_interface         = aws_network_interface.application-server-nic.id
   ###associate_with_private_ip = "10.90.1.90"
-  depends_on = [aws_internet_gateway.gw-APP] #the eip depends on internet gateway to be exist, we can pass other resources like vpc hence it is a list
+  depends_on = [aws_internet_gateway.gw-APP] #the eip depends on internet gateway to be exist
 }
 
 ##8. Assign elastic ip to in the NIC (b)
@@ -252,7 +232,7 @@ resource "aws_eip" "application-server-pubip-B" {
   vpc                       = true
   network_interface         = aws_network_interface.application-server-nic-B.id
   ###associate_with_private_ip = "10.90.2.90"
-  depends_on = [aws_internet_gateway.gw-APP] #the eip depends on internet gateway to be exist, we can pass other resources like vpc hence it is a list
+  depends_on = [aws_internet_gateway.gw-APP] #the eip depends on internet gateway to be exist
 }
 
 ##8. Assign elastic ip to in the NIC (c)
@@ -260,7 +240,7 @@ resource "aws_eip" "application-server-pubip-C" {
   vpc                       = true
   network_interface         = aws_network_interface.application-server-nic-C.id
   ###associate_with_private_ip = "10.90.3.90"
-  depends_on = [aws_internet_gateway.gw-APP] #the eip depends on internet gateway to be exist, we can pass other resources like vpc hence it is a list
+  depends_on = [aws_internet_gateway.gw-APP] #the eip depends on internet gateway to be exist
 }
 
 ##9. Create an EC2
