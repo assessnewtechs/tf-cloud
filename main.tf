@@ -163,7 +163,8 @@ resource "aws_security_group" "allow_http_https_alb_ec2" {
   }
 }
 
-##6. Creation of security group SSH only
+##6. Creation of security group SSH only, Feel free to remove the sg as System Manager would be used to manage EC2s, just to know, 
+##if you remove it, dont forget to remove it from network interfaces as well.
 resource "aws_security_group" "allow_ssh" {
   name        = "allow_ssh_my_ip"
   description = "Allow SSH my ip inbound traffic"
