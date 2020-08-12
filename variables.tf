@@ -38,8 +38,3 @@ variable "vol_size" {
 	default = [20]
 }
 
-#instancetype = "t2.micro"
-#my_image = "ami-089cc16f7f08c4457"
-#subnet_cidr = ["10.90.1.0/24","10.90.2.0/24","10.90.3.0/24"]
-#subnet_az = ["eu-west-1a","eu-west-1b","eu-west-1c"]
-#address_space_vpc = ["10.90.0.0/16","10.91.0.0/16","10.92.0.0/16","10.93.0.0/16"]
